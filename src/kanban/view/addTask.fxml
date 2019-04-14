@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="400.0" prefWidth="335.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="kanban.controller.AddTask">
+   <children>
+      <ComboBox fx:id="priority" layoutX="31.0" layoutY="71.0" prefHeight="31.0" prefWidth="287.0" promptText="Choose priority" />
+      <DatePicker fx:id="datePicker" layoutX="31.0" layoutY="109.0" prefHeight="31.0" prefWidth="287.0" />
+      <TextArea fx:id="taskDescription" layoutX="31.0" layoutY="152.0" prefHeight="96.0" prefWidth="287.0" text="New task description" />
+      <Button fx:id="addButton" layoutX="136.0" layoutY="305.0" mnemonicParsing="false" onAction="#addTask" prefHeight="31.0" prefWidth="63.0" text="Add" />
+      <TextField fx:id="taskName" layoutX="31.0" layoutY="27.0" prefHeight="31.0" prefWidth="287.0" text="new task" />
+   </children>
+</AnchorPane>

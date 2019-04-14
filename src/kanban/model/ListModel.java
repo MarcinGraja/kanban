@@ -1,20 +1,38 @@
 package kanban.model;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.scene.control.ListView;
 
 public class ListModel {
-    private ObservableList<Task> listTasks = FXCollections.observableArrayList();
-    private ListView listView;
-    private String listName;
+    public enum listModelName{
+        TODO("TO DO"), INPROGRESS("IN PROGRESS"), DONE("DONE");
+        private String listModelName;
+        listModelName(String listModelName){
+            this.listModelName=listModelName;
+        }
+        @Override
+        public String toString(){
+            return listModelName;
+        }
+    }
+    private ListView <Task> listView;
+    private listModelName listName;
 
-    public ListModel(ListView listView, String listName){
+    public ListModel(ListView <Task> listView, listModelName listName){
         this.listName=listName;
         this.listView=listView;
     }
     public void addTask(Task task){
-        listTasks.add(task);
+        listView.getItems().add(task);
     }
+    public void removeTask(Task task){
+        listView.getItems().remove(task);
+    }
+    public ListView <Task> getListView(){
+        return listView;
+    }
+    public listModelName getListNameAsEnum(){
+        return listName;
+    }
+
 
 }
