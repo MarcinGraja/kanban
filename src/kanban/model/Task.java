@@ -1,31 +1,25 @@
 package kanban.model;
 
+import kanban.model.enumerations.ListModelName;
+import kanban.model.enumerations.Priority;
+
 import java.time.LocalDate;
 
 public class Task {
-    public enum Priority{
-        LOW("low"), MEDIUM("medium"), HIGH("high");
-        private String priority;
-        Priority(String priority){
-            this.priority=priority;
-        }
-        @Override
-        public String toString(){
-            return priority;
-        }
-    }
     private String name;
     private LocalDate date;
     private Priority priority;
     private String description;
-    public Task(String name, Priority priority, String description, LocalDate date){
+    private ListModelName location;
+    public Task(String name, Priority priority, String description, LocalDate date, ListModelName location){
         this.name = name;
         this.date = date;
         this.priority = priority;
         this.description = description;
+        this.location = location;
     }
     String allToString(){
-        return "name: " + getName() + "\n priority: " + getPriority() + "\ndeadline: " + getDate() + "\ndescription: " + getDescription();
+        return "name: " + name + "\n priority: " + priority + "\ndeadline: " + date + "\ndescription: " + description + "\n in " + location;
     }
     public String toString(){
         return getName();
@@ -44,5 +38,16 @@ public class Task {
 
     public String getDescription() {
         return description;
+    }
+    public ListModelName getLocation(){
+        return location;
+    }
+
+    public void setLocation(ListModelName location) {
+        this.location = location;
+    }
+
+    public void move(ListModelName destination){
+        location = destination;
     }
 }

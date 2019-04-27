@@ -11,42 +11,17 @@ import java.io.IOException;
 import kanban.model.Task;
 import kanban.model.ListModel;
 import kanban.model.customCell;
+import kanban.model.enumerations.ListModelName;
 
 
 public class Controller {
-    static ListModel toDo;
-    static ListModel inProgress;
-    static ListModel done;
     @FXML private ListView <Task> toDoView;
     @FXML private ListView <Task> inProgressView;
     @FXML private ListView <Task> doneView;
     @FXML MenuBar menuBar;
     @FXML private void initialize(){
-        toDo = initListModel(ListModel.listModelName.TODO);
-        inProgress = initListModel( ListModel.listModelName.INPROGRESS);
-        done = initListModel(ListModel.listModelName.DONE);
-    }
-    private ListModel initListModel(ListModel.listModelName name){
-        ListModel listModel;
-        switch(name){
-            case TODO: {
-                listModel = new ListModel(toDoView, name);
-                break;
-            }
-            case INPROGRESS:{
-                listModel = new ListModel(inProgressView, name);
-                break;
-            }
-            case DONE:{
-                listModel = new ListModel(doneView, name);
-                break;
-            }
-            default:{
-                throw new RuntimeException("you added another listModelName and you decided not to handle this, you dummy. If you're not me please disregard this message.");
-            }
-        }
-
-        listModel.getListView().setCellFactory(lv -> {
+        ListModel.setListModel(this);
+        toDoView.setCellFactory(lv ->{
             Menu move = new Menu("move");
             ToggleGroup toggleGroup = new ToggleGroup();
             RadioMenuItem moveToToDo = new RadioMenuItem("to do");
@@ -64,27 +39,22 @@ public class Controller {
             ListCell<Task> cell = new customCell();
             edit.textProperty().bind(Bindings.format("Edit \"%s\"", cell.itemProperty().asString()));
             edit.setOnAction(event -> {
-                 Task task = cell.getItem();
-                 listModel.getListView().getItems().remove(cell.getItem());
-                 kanban.controller.AddTask.setTask(task, listModel.getListNameAsEnum());
-                 showAddTask();
+                Task task = cell.getItem();
+                kanban.controller.AddTask.setTask(task, cell.getItem().getLocation());
             });
             delete.textProperty().bind(Bindings.format("Delete \"%s\"", cell.itemProperty().asString()));
-            delete.setOnAction(event -> listModel.getListView().getItems().remove(cell.getItem()));
+            delete.setOnAction(event -> ListModel.removeTask(cell.getItem()));
 
-            moveToToDo.setOnAction(e-> {
-                Controller.toDo.addTask(cell.getItem());
-                listModel.removeTask(cell.getItem());
-                    });
-
-            moveToInProgress.setOnAction(e-> {
-                Controller.inProgress.addTask(cell.getItem());
-                listModel.removeTask(cell.getItem());
+            moveToToDo.setOnAction(e -> {
+                cell.getItem().move(ListModelName.TODO);
             });
 
-            moveToDone.setOnAction(e-> {
-                Controller.done.addTask(cell.getItem());
-                listModel.removeTask(cell.getItem());
+            moveToDone.setOnAction(e -> {
+                cell.getItem().move(ListModelName.DONE);
+            });
+
+            moveToInProgress.setOnAction(e -> {
+                cell.getItem().move(ListModelName.INPROGRESS);
             });
             cell.emptyProperty().addListener((obs, wasEmpty, isNowEmpty) -> {
                 if (isNowEmpty) {
@@ -93,27 +63,58 @@ public class Controller {
                     cell.setContextMenu(contextMenu);
                 }
             });
-            switch(listModel.getListNameAsEnum()){
+            switch (cell.getItem().getLocation()) {
                 case TODO: {
                     moveToToDo.setSelected(true);
                     break;
                 }
-                case INPROGRESS:{
+                case INPROGRESS: {
                     moveToInProgress.setSelected(true);
                     break;
                 }
-                case DONE:{
+                case DONE: {
                     moveToDone.setSelected(true);
                     break;
                 }
-
             }
-            return cell ;
+            return cell;
         });
-
-        return listModel;
+        inProgressView.setCellFactory(toDoView.getCellFactory());
+        doneView.setCellFactory(toDoView.getCellFactory());
     }
-    @FXML void showAddTask() {
+    public void addTask(Task task){
+        switch(task.getLocation()){
+            case TODO:{
+                toDoView.getItems().add(task);
+                break;
+            }
+            case INPROGRESS:{
+                inProgressView.getItems().add(task);
+                break;
+            }
+            case DONE:{
+                doneView.getItems().add(task);
+                break;
+            }
+        }
+    }
+    public void removeTask(Task task){
+        switch(task.getLocation()){
+            case TODO:{
+                toDoView.getItems().remove(task);
+                break;
+            }
+            case INPROGRESS:{
+                inProgressView.getItems().remove(task);
+                break;
+            }
+            case DONE:{
+                doneView.getItems().remove(task);
+                break;
+            }
+        }
+    }
+    @FXML public void showAddTask() {
         FXMLLoader fxmlLoader = new FXMLLoader();
         fxmlLoader.setLocation(getClass().getResource("/kanban/view/addTask.fxml"));
 

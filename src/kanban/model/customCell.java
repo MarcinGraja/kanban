@@ -2,6 +2,7 @@ package kanban.model;
 
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Tooltip;
+import kanban.model.enumerations.Priority;
 
 public class customCell extends ListCell<Task> {
     @Override
@@ -12,10 +13,10 @@ public class customCell extends ListCell<Task> {
             Tooltip tooltip = new Tooltip();
             tooltip.setText(task.allToString());
             this.setTooltip(tooltip);
-            if(task.getPriority()== Task.Priority.HIGH) {
+            if(task.getPriority()== Priority.HIGH) {
                 setStyle("-fx-control-inner-background:#ff0000;");
             }
-            else if (task.getPriority() == Task.Priority.MEDIUM){
+            else if (task.getPriority() == Priority.MEDIUM){
                 setStyle("-fx-control-inner-background:#ffff00;");
             }
             else{
@@ -29,5 +30,6 @@ public class customCell extends ListCell<Task> {
         }
 
     }
+
 
 }

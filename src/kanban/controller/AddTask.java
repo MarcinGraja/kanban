@@ -5,13 +5,15 @@ import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 import kanban.model.ListModel;
+import kanban.model.enumerations.Priority;
 import kanban.model.Task;
+import kanban.model.enumerations.ListModelName;
 
 import java.time.LocalDate;
 
 public class AddTask {
     @FXML
-    private ComboBox <Task.Priority> priority;
+    private ComboBox <Priority> priority;
     @FXML
     private TextArea taskDescription;
     @FXML
@@ -21,10 +23,10 @@ public class AddTask {
     @FXML
     Button addButton;
     static private Task task = null;
-    static private ListModel.listModelName location = null;
+    static private ListModelName location = null;
     @FXML private void initialize(){
 
-        priority.getItems().setAll(Task.Priority.values());
+        priority.getItems().setAll(Priority.values());
         datePicker.setValue(LocalDate.now());
         if (task != null){
             priority.getSelectionModel().select(task.getPriority());
@@ -47,28 +49,15 @@ public class AddTask {
             alert.showAndWait();
             return;
         }
-        Task task = new Task(taskName.getText(), priority.getValue(), taskDescription.getText(), datePicker.getValue());
-        if (location == null) location = ListModel.listModelName.TODO;
-        switch (location){
-            case TODO:{
-                Controller.toDo.addTask(task);
-                break;
-            }
-            case DONE:{
-                Controller.done.addTask(task);
-                break;
-            }
-            case INPROGRESS:{
-                Controller.inProgress.addTask(task);
-                break;
-            }
-        }
+        Task task = new Task(taskName.getText(), priority.getValue(), taskDescription.getText(), datePicker.getValue(), location);
+        if (location == null) location = ListModelName.TODO;
+        ListModel.addTask(task);
         Stage stage = (Stage)addButton.getScene().getWindow();
         AddTask.task = null;
         AddTask.location = null;
         stage.close();
     }
-    static void setTask(Task task, ListModel.listModelName location){
+    static void setTask(Task task, ListModelName location){
         AddTask.task = task;
         AddTask.location = location;
     }

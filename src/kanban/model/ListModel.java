@@ -1,38 +1,38 @@
 package kanban.model;
 
-import javafx.scene.control.ListView;
+import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import kanban.controller.Controller;
+import kanban.model.enumerations.ListModelName;
 
-public class ListModel {
-    public enum listModelName{
-        TODO("TO DO"), INPROGRESS("IN PROGRESS"), DONE("DONE");
-        private String listModelName;
-        listModelName(String listModelName){
-            this.listModelName=listModelName;
-        }
-        @Override
-        public String toString(){
-            return listModelName;
-        }
-    }
-    private ListView <Task> listView;
-    private listModelName listName;
+import java.util.ArrayList;
+import java.util.List;
 
-    public ListModel(ListView <Task> listView, listModelName listName){
-        this.listName=listName;
-        this.listView=listView;
-    }
-    public void addTask(Task task){
-        listView.getItems().add(task);
-    }
-    public void removeTask(Task task){
-        listView.getItems().remove(task);
-    }
-    public ListView <Task> getListView(){
-        return listView;
-    }
-    public listModelName getListNameAsEnum(){
-        return listName;
-    }
+public class ListModel{
 
+    private static ObservableList <Task> observableList;
+    private static Controller controller;
+    public static void setListModel(Controller controller){
+        ListModel.controller = controller;
+        observableList = FXCollections.observableArrayList(new ArrayList<>());
+        observableList.addListener((ListChangeListener<Task>) change -> {
+            while (change.next()){
+                for (Task task: change.getAddedSubList()) {
+                    if (task.getLocation() == null) task.setLocation(ListModelName.TODO);
+                    controller.addTask(task);
+                }
+                for (Task task: change.getRemoved()){
+                    controller.removeTask(task);
+                }
+            }
 
+        });
+    }
+    public static void addTask(Task task){
+        observableList.add(task);
+    }
+    public static void removeTask(Task task){
+        observableList.remove(task);
+    }
 }
