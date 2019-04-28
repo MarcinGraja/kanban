@@ -4,8 +4,11 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import java.io.IOException;
+
+import java.io.*;
+import java.util.ArrayList;
 
 import kanban.model.Task;
 import kanban.model.ListModel;
@@ -16,7 +19,7 @@ import kanban.model.enumerations.ListModelName;
 public class Controller {
     private static Controller mainController;
     private ListModel listModel;
-    private AddTask addTaskContoller;
+    private AddTask addTaskController;
     @FXML private ListView <Task> toDoView;
     @FXML private ListView <Task> inProgressView;
     @FXML private ListView <Task> doneView;
@@ -25,8 +28,8 @@ public class Controller {
         mainController = this;
         listModel = new ListModel();
 
-        addTaskContoller = new AddTask(listModel);
-        addTaskContoller.setTask(null);
+        addTaskController = new AddTask(listModel);
+        addTaskController.setTask(null);
         CustomCell.setController(this);
 
         toDoView.setCellFactory(lv -> {
@@ -54,21 +57,22 @@ public class Controller {
         listModel.removeTask(task);
     }
     public void editTask(Task task){
-        addTaskContoller.setTask(task);
+        addTaskController.setTask(task);
         showAddTask();
         ListView tmp = containingListView(task);
         if (tmp!=null) {
             //force update; without it listView will update when you select an item/add item/delete item
-            tmp.getSelectionModel().select(0);
+            for (int i=0; i< tmp.getItems().size(); i++){
+                tmp.getSelectionModel().select(i);
+            }
             tmp.getSelectionModel().select(-1);
-
         }
         else System.out.println("smthing bad m8");
     }
     @FXML public void showAddTask() {
         FXMLLoader fxmlLoader = new FXMLLoader();
         fxmlLoader.setLocation(getClass().getResource("/kanban/view/addTask.fxml"));
-        fxmlLoader.setController(addTaskContoller);
+        fxmlLoader.setController(addTaskController);
 
         try {
             Scene scene = new Scene(fxmlLoader.load(), 400, 335);
@@ -99,5 +103,44 @@ public class Controller {
     private ListView<Task> containingListView(Task task){
         return toDoView.getItems().contains(task) ? toDoView : doneView.getItems().contains(task) ?
                 doneView : inProgressView.getItems().contains(task) ? inProgressView : null;
+    }
+    @SuppressWarnings("Duplicates")
+    @FXML
+    void save(){
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        fileChooser.setInitialFileName("tasks.csv");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("comma separated value file", "*.csv"));
+        fileChooser.setTitle("Choose file you want to save to");
+        File file =fileChooser.showSaveDialog(new Stage());
+        try {
+            FileOutputStream fileOutputStream = new FileOutputStream(file);
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(fileOutputStream);
+            objectOutputStream.writeObject(new ArrayList<>(listModel.getObservableList()));
+            objectOutputStream.close();
+            fileOutputStream.close();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+    @SuppressWarnings("Duplicates")
+    @FXML
+    void load(){
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+        fileChooser.setInitialFileName("tasks.csv");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("comma separated value file", "*.csv"));
+        fileChooser.setTitle("Choose file you want to load from");
+        File file =fileChooser.showOpenDialog(new Stage());
+        try {
+            FileInputStream fileInputStream = new FileInputStream(file);
+            ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+            ArrayList output = new ArrayList<>();
+            listModel.getObservableList().setAll((ArrayList<Task>)objectInputStream.readObject());
+            objectInputStream.close();
+            fileInputStream.close();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }

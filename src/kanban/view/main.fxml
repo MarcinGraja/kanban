@@ -21,7 +21,9 @@
         <menus>
           <Menu mnemonicParsing="false" text="File">
             <items>
-              <MenuItem mnemonicParsing="false" onAction="#close" text="Close" />
+              <MenuItem mnemonicParsing="false" onAction="#save" text="Save" />
+                  <MenuItem mnemonicParsing="false" onAction="#load" text="Load" />
+                  <MenuItem mnemonicParsing="false" onAction="#close" text="Close" />
             </items>
           </Menu>
           <Menu mnemonicParsing="false" text="Help">
@@ -41,7 +43,7 @@
           <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
         </rowConstraints>
          <children>
-            <ListView fx:id="toDoView" prefHeight="200.0" prefWidth="200.0"/>
+            <ListView fx:id="toDoView" prefHeight="200.0" prefWidth="200.0" />
             <ListView fx:id="inProgressView" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" />
             <ListView fx:id="doneView" prefHeight="285.0" prefWidth="203.0" GridPane.columnIndex="2" />
          </children>
