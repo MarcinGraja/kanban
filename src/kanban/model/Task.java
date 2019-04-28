@@ -1,53 +1,70 @@
 package kanban.model;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import kanban.controller.Controller;
 import kanban.model.enumerations.ListModelName;
 import kanban.model.enumerations.Priority;
 
 import java.time.LocalDate;
 
-public class Task {
-    private String name;
-    private LocalDate date;
-    private Priority priority;
-    private String description;
-    private ListModelName location;
-    public Task(String name, Priority priority, String description, LocalDate date, ListModelName location){
-        this.name = name;
-        this.date = date;
-        this.priority = priority;
-        this.description = description;
-        this.location = location;
+public class Task{
+
+    private StringProperty name;
+    private ObjectProperty<LocalDate> date;
+    private ObjectProperty<Priority> priority;
+    private StringProperty description;
+    private ObjectProperty<ListModelName> location;
+
+
+
+    public Task(String name, Priority priority, String description, LocalDate date, ListModelName location) {
+        this.name = new SimpleStringProperty(name);
+        this.date = new SimpleObjectProperty<>(date);
+        this.priority = new SimpleObjectProperty<>(priority);
+        this.description = new SimpleStringProperty(description);
+        this.location = new SimpleObjectProperty<>(location);
+    }
+    public void editTask(String name, Priority priority, String description, LocalDate date, ListModelName location){
+        this.name = new SimpleStringProperty(name);
+        this.date = new SimpleObjectProperty<>(date);
+        this.priority = new SimpleObjectProperty<>(priority);
+        this.description = new SimpleStringProperty(description);
+        this.location = new SimpleObjectProperty<>(location);
     }
     String allToString(){
-        return "name: " + name + "\n priority: " + priority + "\ndeadline: " + date + "\ndescription: " + description + "\n in " + location;
+        return "name: " + getName() + "\n priority: " + getPriority() + "\ndeadline: " + getDate() + "\ndescription: " + getDescription() + "\n in " + getLocation();
     }
     public String toString(){
         return getName();
     }
     public String getName() {
-        return name;
+        return name.getValue();
     }
 
     public LocalDate getDate() {
-        return date;
+        return date.getValue();
     }
 
     public Priority getPriority() {
-        return priority;
+        return priority.getValue();
     }
 
     public String getDescription() {
-        return description;
+        return description.getValue();
     }
     public ListModelName getLocation(){
-        return location;
+        return location.getValue();
     }
 
-    public void setLocation(ListModelName location) {
-        this.location = location;
+    void requestMove(ListModelName destination){
+        Controller.getMainController().moveTask(this, destination);
     }
-
-    public void move(ListModelName destination){
-        location = destination;
+    public void setLocation(ListModelName location){
+        System.out.println("moving " + toString() + " from " + this.getLocation() + " to " + location);
+        this.location = new SimpleObjectProperty<>(location);
+        System.out.println("result:" + this.getLocation());
     }
 }

@@ -1,17 +1,19 @@
 package kanban.controller;
 
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 
 import kanban.model.ListModel;
-import kanban.model.enumerations.Priority;
 import kanban.model.Task;
+import kanban.model.enumerations.Priority;
 import kanban.model.enumerations.ListModelName;
 
 import java.time.LocalDate;
 
-public class AddTask {
+class AddTask {
     @FXML
     private ComboBox <Priority> priority;
     @FXML
@@ -21,11 +23,14 @@ public class AddTask {
     @FXML
     private DatePicker datePicker;
     @FXML
-    Button addButton;
-    static private Task task = null;
-    static private ListModelName location = null;
+    private Button addButton;
+    private Task task = null;
+    private ListModel listModel;
+    AddTask(ListModel listModel){
+     this.listModel = listModel;
+    }
     @FXML private void initialize(){
-
+        addButton.setOnAction(e -> addTask());
         priority.getItems().setAll(Priority.values());
         datePicker.setValue(LocalDate.now());
         if (task != null){
@@ -35,7 +40,7 @@ public class AddTask {
             datePicker.setValue(task.getDate());
         }
     }
-    @FXML void addTask(){
+    @FXML private void addTask(){
         if (priority.getValue() == null || datePicker.getValue() == null){
             System.out.println("priority: "+priority.getValue());
             System.out.println("date: "+datePicker.getValue());
@@ -49,18 +54,18 @@ public class AddTask {
             alert.showAndWait();
             return;
         }
-        Task task = new Task(taskName.getText(), priority.getValue(), taskDescription.getText(), datePicker.getValue(), location);
-        if (location == null) location = ListModelName.TODO;
-        ListModel.addTask(task);
+        if (this.task == null){
+            Task task = new Task(taskName.getText(), priority.getValue(), taskDescription.getText(), datePicker.getValue(), ListModelName.TODO);
+            listModel.addTask(task);
+        }
+        else{
+            task.editTask(taskName.getText(), priority.getValue(), taskDescription.getText(), datePicker.getValue(), task.getLocation());
+        }
+        this.task = null;
         Stage stage = (Stage)addButton.getScene().getWindow();
-        AddTask.task = null;
-        AddTask.location = null;
         stage.close();
     }
-    static void setTask(Task task, ListModelName location){
-        AddTask.task = task;
-        AddTask.location = location;
+    void setTask(Task task){
+        this.task = task;
     }
-
-
 }

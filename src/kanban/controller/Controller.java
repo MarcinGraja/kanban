@@ -1,6 +1,5 @@
 package kanban.controller;
 
-import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -10,113 +9,66 @@ import java.io.IOException;
 
 import kanban.model.Task;
 import kanban.model.ListModel;
-import kanban.model.customCell;
+import kanban.model.CustomCell;
 import kanban.model.enumerations.ListModelName;
 
 
 public class Controller {
+    private static Controller mainController;
+    private ListModel listModel;
+    private AddTask addTaskContoller;
     @FXML private ListView <Task> toDoView;
     @FXML private ListView <Task> inProgressView;
     @FXML private ListView <Task> doneView;
     @FXML MenuBar menuBar;
     @FXML private void initialize(){
-        ListModel.setListModel(this);
-        toDoView.setCellFactory(lv ->{
-            Menu move = new Menu("move");
-            ToggleGroup toggleGroup = new ToggleGroup();
-            RadioMenuItem moveToToDo = new RadioMenuItem("to do");
-            RadioMenuItem moveToInProgress = new RadioMenuItem("in progress");
-            RadioMenuItem moveToDone = new RadioMenuItem("done");
-            moveToToDo.setToggleGroup(toggleGroup);
-            moveToInProgress.setToggleGroup(toggleGroup);
-            moveToDone.setToggleGroup(toggleGroup);
-            move.getItems().setAll(moveToToDo, moveToInProgress, moveToDone);
-            ContextMenu contextMenu = new ContextMenu();
-            MenuItem edit = new MenuItem();
-            MenuItem delete = new MenuItem();
-            contextMenu.getItems().setAll(move, edit, delete);
+        mainController = this;
+        listModel = new ListModel();
 
-            ListCell<Task> cell = new customCell();
-            edit.textProperty().bind(Bindings.format("Edit \"%s\"", cell.itemProperty().asString()));
-            edit.setOnAction(event -> {
-                Task task = cell.getItem();
-                kanban.controller.AddTask.setTask(task, cell.getItem().getLocation());
-            });
-            delete.textProperty().bind(Bindings.format("Delete \"%s\"", cell.itemProperty().asString()));
-            delete.setOnAction(event -> ListModel.removeTask(cell.getItem()));
+        addTaskContoller = new AddTask(listModel);
+        addTaskContoller.setTask(null);
+        CustomCell.setController(this);
 
-            moveToToDo.setOnAction(e -> {
-                cell.getItem().move(ListModelName.TODO);
-            });
-
-            moveToDone.setOnAction(e -> {
-                cell.getItem().move(ListModelName.DONE);
-            });
-
-            moveToInProgress.setOnAction(e -> {
-                cell.getItem().move(ListModelName.INPROGRESS);
-            });
-            cell.emptyProperty().addListener((obs, wasEmpty, isNowEmpty) -> {
-                if (isNowEmpty) {
-                    cell.setContextMenu(null);
-                } else {
-                    cell.setContextMenu(contextMenu);
-                }
-            });
-            switch (cell.getItem().getLocation()) {
-                case TODO: {
-                    moveToToDo.setSelected(true);
-                    break;
-                }
-                case INPROGRESS: {
-                    moveToInProgress.setSelected(true);
-                    break;
-                }
-                case DONE: {
-                    moveToDone.setSelected(true);
-                    break;
-                }
-            }
-            return cell;
+        toDoView.setCellFactory(lv -> {
+            lv.setOnMouseClicked(mouseEvent -> lv.getSelectionModel().select(-1));  //forbid selection
+            return new CustomCell();
         });
         inProgressView.setCellFactory(toDoView.getCellFactory());
         doneView.setCellFactory(toDoView.getCellFactory());
+
+
+        toDoView.setItems(listModel.getObservableList().filtered(task -> task.getLocation() == ListModelName.TODO));
+        inProgressView.setItems(listModel.getObservableList().filtered(task -> task.getLocation()== ListModelName.INPROGRESS));
+        doneView.setItems(listModel.getObservableList().filtered(task -> task.getLocation()== ListModelName.DONE));
     }
-    public void addTask(Task task){
-        switch(task.getLocation()){
-            case TODO:{
-                toDoView.getItems().add(task);
-                break;
-            }
-            case INPROGRESS:{
-                inProgressView.getItems().add(task);
-                break;
-            }
-            case DONE:{
-                doneView.getItems().add(task);
-                break;
-            }
-        }
+    public static Controller getMainController(){
+        return mainController;
+    }
+    public void moveTask(Task task, ListModelName destination){
+        removeTask(task);
+        task.setLocation(destination);
+        listModel.addTask(task);
+
     }
     public void removeTask(Task task){
-        switch(task.getLocation()){
-            case TODO:{
-                toDoView.getItems().remove(task);
-                break;
-            }
-            case INPROGRESS:{
-                inProgressView.getItems().remove(task);
-                break;
-            }
-            case DONE:{
-                doneView.getItems().remove(task);
-                break;
-            }
+        listModel.removeTask(task);
+    }
+    public void editTask(Task task){
+        addTaskContoller.setTask(task);
+        showAddTask();
+        ListView tmp = containingListView(task);
+        if (tmp!=null) {
+            //force update; without it listView will update when you select an item/add item/delete item
+            tmp.getSelectionModel().select(0);
+            tmp.getSelectionModel().select(-1);
+
         }
+        else System.out.println("smthing bad m8");
     }
     @FXML public void showAddTask() {
         FXMLLoader fxmlLoader = new FXMLLoader();
         fxmlLoader.setLocation(getClass().getResource("/kanban/view/addTask.fxml"));
+        fxmlLoader.setController(addTaskContoller);
 
         try {
             Scene scene = new Scene(fxmlLoader.load(), 400, 335);
@@ -143,5 +95,9 @@ public class Controller {
         alert.setHeaderText(null);
         alert.setContentText("Made my Marcin Graja over a period of about 40 hours. It was terrible. Hope you enjoy this application!");
         alert.showAndWait();
+    }
+    private ListView<Task> containingListView(Task task){
+        return toDoView.getItems().contains(task) ? toDoView : doneView.getItems().contains(task) ?
+                doneView : inProgressView.getItems().contains(task) ? inProgressView : null;
     }
 }
