@@ -39,10 +39,10 @@ public class Controller {
         inProgressView.setCellFactory(toDoView.getCellFactory());
         doneView.setCellFactory(toDoView.getCellFactory());
 
-
         toDoView.setItems(listModel.getObservableList().filtered(task -> task.getLocation() == ListModelName.TODO));
         inProgressView.setItems(listModel.getObservableList().filtered(task -> task.getLocation()== ListModelName.INPROGRESS));
         doneView.setItems(listModel.getObservableList().filtered(task -> task.getLocation()== ListModelName.DONE));
+        loadTasksOnStartup();
     }
     public static Controller getMainController(){
         return mainController;
@@ -59,15 +59,7 @@ public class Controller {
     public void editTask(Task task){
         addTaskController.setTask(task);
         showAddTask();
-        ListView tmp = containingListView(task);
-        if (tmp!=null) {
-            //force update; without it listView will update when you select an item/add item/delete item
-            for (int i=0; i< tmp.getItems().size(); i++){
-                tmp.getSelectionModel().select(i);
-            }
-            tmp.getSelectionModel().select(-1);
-        }
-        else System.out.println("smthing bad m8");
+        forceListViewUpdate(containingListView(task));
     }
     @FXML public void showAddTask() {
         FXMLLoader fxmlLoader = new FXMLLoader();
@@ -104,13 +96,45 @@ public class Controller {
         return toDoView.getItems().contains(task) ? toDoView : doneView.getItems().contains(task) ?
                 doneView : inProgressView.getItems().contains(task) ? inProgressView : null;
     }
-    @SuppressWarnings("Duplicates")
+    private void forceListViewUpdate(ListView<Task> listView){
+        if (listView!=null) {
+            //without it listView will update when you select item/add item/delete item
+            for (int i=0; i< listView.getItems().size(); i++){
+                listView.getSelectionModel().select(i);
+            }
+            listView.getSelectionModel().select(-1);
+        }
+        else System.out.println("smthing bad m8");
+    }
+    @SuppressWarnings({"Duplicates", "unchecked"})
+    private void loadTasksOnStartup(){
+        File file = new File(System.getProperty("user.dir")+"/tasks.obs");
+        try {
+            FileInputStream fileInputStream = new FileInputStream(file);
+            ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
+            listModel.getObservableList().setAll((ArrayList<Task>)objectInputStream.readObject());
+            objectInputStream.close();
+            fileInputStream.close();
+        }catch (java.io.IOException|java.lang.ClassNotFoundException e){
+            System.out.println(e);
+            file = new File(System.getProperty("user.dir")+"/tasks.csv");
+            StringBuilder in = new StringBuilder();
+            BufferedReader reader;
+            try{
+                reader = new BufferedReader(new FileReader(file));
+                String tmp;
+                while ((tmp = reader.readLine()) != null){
+                    in.append(tmp).append("\n");
+                }
+            }catch (java.io.IOException e2){
+                e2.printStackTrace();
+            }
+            listModel.getObservableList().setAll(Task.fromCSVArray(in.toString()));
+        }
+    }
     @FXML
-    void save(){
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
-        fileChooser.setInitialFileName("tasks.csv");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("comma separated value file", "*.csv"));
+    void saveTasks(){
+        FileChooser fileChooser = defaultFileChooser(false);
         fileChooser.setTitle("Choose file you want to save to");
         File file =fileChooser.showSaveDialog(new Stage());
         try {
@@ -123,24 +147,75 @@ public class Controller {
             e.printStackTrace();
         }
     }
-    @SuppressWarnings("Duplicates")
+    @SuppressWarnings({"Duplicates", "unchecked"})
     @FXML
-    void load(){
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
-        fileChooser.setInitialFileName("tasks.csv");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("comma separated value file", "*.csv"));
+    void loadTasks(){
+        FileChooser fileChooser = defaultFileChooser(false);
         fileChooser.setTitle("Choose file you want to load from");
         File file =fileChooser.showOpenDialog(new Stage());
         try {
             FileInputStream fileInputStream = new FileInputStream(file);
             ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream);
-            ArrayList output = new ArrayList<>();
             listModel.getObservableList().setAll((ArrayList<Task>)objectInputStream.readObject());
             objectInputStream.close();
             fileInputStream.close();
         }catch (Exception e){
             e.printStackTrace();
         }
+    }
+    @FXML
+    void exportTasks(){
+        FileChooser fileChooser = defaultFileChooser(true);
+        fileChooser.setTitle("Choose file you want to export to");
+        File file =fileChooser.showSaveDialog(new Stage());
+        StringBuilder out = new StringBuilder();
+        for (Task task : listModel.getObservableList()) {
+            out.append(task.toCSV()).append("\n");
+        }
+        try {
+            FileWriter writer = new FileWriter(file);
+            writer.write(out.toString());
+            writer.close();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+    @FXML
+    @SuppressWarnings("Duplicates")
+    void importTasks(){
+        FileChooser fileChooser = defaultFileChooser(true);
+        fileChooser.setTitle("Choose file you want to import from");
+        File file =fileChooser.showOpenDialog(new Stage());
+        StringBuilder in = new StringBuilder();
+        BufferedReader reader;
+        try{
+            reader = new BufferedReader(new FileReader(file));
+            String tmp;
+            while ((tmp = reader.readLine()) != null){
+                in.append(tmp).append("\n");
+            }
+        }catch (java.io.IOException e){
+            e.printStackTrace();
+        }
+        listModel.getObservableList().setAll(Task.fromCSVArray(in.toString()));
+
+    }
+    private FileChooser defaultFileChooser(boolean toCSV){
+        FileChooser fileChooser = new FileChooser();
+        if(toCSV){
+            fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+            fileChooser.setInitialFileName("tasks.csv");
+            fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("comma separated value file", "*.csv"),
+                    new FileChooser.ExtensionFilter("all","*.*"));
+        }
+        else{
+            fileChooser.setInitialDirectory(new File(System.getProperty("user.dir")));
+            fileChooser.setInitialFileName("tasks.obs");
+            fileChooser.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("object stream file", "*.obs"),
+                    new FileChooser.ExtensionFilter("all","*.*"));
+        }
+        return fileChooser;
     }
 }

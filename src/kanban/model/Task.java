@@ -13,6 +13,10 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import java.util.List;
 
 public class Task implements Serializable {
 
@@ -21,8 +25,7 @@ public class Task implements Serializable {
     private transient StringProperty description;
     private transient ObjectProperty<LocalDate> date;
     private transient ObjectProperty<ListModelName> location;
-
-
+    static final long serialVersionUID = 7888371833708311411L;
     public Task(String name, Priority priority, String description, LocalDate date, ListModelName location) {
         this.name = new SimpleStringProperty(name);
         this.date = new SimpleObjectProperty<>(date);
@@ -51,16 +54,16 @@ public class Task implements Serializable {
         return name.getValue();
     }
 
-    public LocalDate getDate() {
-        return date.getValue();
-    }
-
     public Priority getPriority() {
         return priority.getValue();
     }
 
     public String getDescription() {
         return description.getValue();
+    }
+
+    public LocalDate getDate() {
+        return date.getValue();
     }
 
     public ListModelName getLocation() {
@@ -87,5 +90,33 @@ public class Task implements Serializable {
     }
     private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
         editTask(s.readUTF(), (Priority)s.readObject(), s.readUTF(),(LocalDate) s.readObject(), (ListModelName) s.readObject());
+    }
+    private static String CSVSeparator = ";";
+    public String toCSV(){
+
+        return toCSV(CSVSeparator);
+    }
+    public String toCSV(String separator){
+        return getName()+separator+getPriority()+separator+getDescription()+separator+getDate()+separator+getLocation();
+    }
+
+    public static Task fromCSV(String data){
+        return fromCSV(data, CSVSeparator);
+    }
+    public static Task  fromCSV(String data, String separator){
+        List<String> arr = new ArrayList<>(Arrays.asList(data.split(separator)));
+        return new Task(arr.get(0), Priority.fromString(arr.get(1)), arr.get(2), LocalDate.parse(arr.get(3)),
+                ListModelName.fromString(arr.get(4)));
+    }
+    public static List<Task> fromCSVArray(String data){
+        return fromCSVArray(data, CSVSeparator);
+    }
+    public static List<Task> fromCSVArray(String data, String memberSeparator){
+        List<String> input = new ArrayList<>(Arrays.asList(data.split("\n")));
+        List<Task> output = new ArrayList<>();
+        for (String string : input){
+            output.add(fromCSV(string, memberSeparator));
+        }
+        return output;
     }
 }
